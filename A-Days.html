@@ -1,0 +1,1235 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1" name="viewport" />
+    <title>A-Days Clothing</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" rel="stylesheet" />
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-firestore-compat.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap');
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #181a1b;
+            color: #f3f3f3;
+
+            line-height: 1.5;
+        }
+
+        /* --- CSS Reset (simplified) --- */
+        *,
+        *::before,
+        *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        a {
+            text-decoration: none;
+            color: inherit;
+        }
+
+        img {
+            max-width: 100%;
+            display: block;
+        }
+
+        /* --- Global Utils --- */
+        .container {
+            max-width: 1200px;
+            margin-inline: auto;
+            padding: 1rem;
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 0.75rem 1.5rem;
+            border-radius: 2rem;
+            font-weight: 600;
+            border: none;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .btn-primary {
+            background: #2d2f31;
+            color: #fff;
+        }
+
+        .btn-primary:hover {
+            background: #44474a;
+        }
+
+        .grid {
+            display: grid;
+            gap: 1.5rem;
+        }
+
+        /* --- Navbar --- */
+        header {
+            background: #232526;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.18);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 1rem 1.5rem;
+        }
+
+        .nav-brand {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #fff;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 1.5rem;
+            font-weight: 500;
+            color: #e0e0e0;
+        }
+
+        .nav-links a:hover {
+            color: #b5b5b5;
+        }
+
+        /* --- Hero / Landing --- */
+        .hero {
+            min-height: 70vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            background: url('14s.png') center/cover no-repeat;
+            /* Ensure '14s.png' exists or replace with a placeholder */
+            color: #fff;
+            position: relative;
+            padding: 2rem;
+        }
+
+        .hero::after {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background: rgba(24, 26, 27, 0.7);
+        }
+
+        .hero-content {
+            position: relative;
+            z-index: 1;
+            max-width: 600px;
+        }
+
+        .hero h1 {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            font-weight: 800;
+            color: #fff;
+        }
+
+        /* --- Category Section --- */
+        .categories {
+            padding: 4rem 0;
+        }
+
+        .category-card {
+            position: relative;
+            border-radius: 1rem;
+            overflow: hidden;
+            height: 250px;
+            cursor: pointer;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            border: 1px solid #232526;
+            background-color: #232526;
+        }
+
+        .category-card:hover {
+            transform: translateY(-6px);
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.3);
+        }
+
+        .category-card span {
+            position: absolute;
+            inset: 0;
+            background: rgba(24, 26, 27, 0.55);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            font-weight: 700;
+            color: #fff;
+            letter-spacing: 0.5px;
+            text-shadow: 0 2px 8px #000;
+        }
+
+        /* --- Products Grid --- */
+        .products {
+            padding: 4rem 0;
+        }
+
+        .product-card {
+            background: #232526;
+            border-radius: 1rem;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.16);
+            overflow: hidden;
+            transition: transform 0.3s, box-shadow 0.3s;
+            border: 1px solid #232526;
+        }
+
+        .product-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.3);
+        }
+
+        .product-info {
+            padding: 1rem;
+        }
+
+        .product-info h3 {
+            font-size: 1.1rem;
+            margin-bottom: 0.25rem;
+            color: #fff;
+        }
+
+        .product-price {
+            font-weight: 700;
+            margin-bottom: 0.75rem;
+            color: #e0e0e0;
+        }
+
+        /* --- Cart Sidebar --- */
+        #cartSidebar {
+            position: fixed;
+            right: -100%;
+            /* Initially hidden */
+            top: 0;
+            width: 300px;
+            height: 100%;
+            background: #232526;
+            box-shadow: -4px 0 15px rgba(0, 0, 0, 0.3);
+            transition: right 0.3s ease;
+            overflow-y: auto;
+            z-index: 200;
+            padding: 1rem;
+            color: #fff;
+        }
+
+        #cartSidebar.open {
+            right: 0;
+        }
+
+        .cart-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 1rem;
+        }
+
+        .cart-header h3 {
+            color: #fff;
+        }
+
+        .cart-header button {
+            background: none;
+            border: none;
+            color: #fff;
+            font-size: 2rem;
+            cursor: pointer;
+            line-height: 1;
+            /* Adjust for better alignment */
+        }
+
+        #cartItems p {
+            padding: 0.5rem 0;
+            border-bottom: 1px dashed #444;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        #cartItems p:last-child {
+            border-bottom: none;
+        }
+
+        .remove-from-cart {
+            background: none;
+            border: none;
+            color: #ff6b6b;
+            font-size: 1rem;
+            cursor: pointer;
+            margin-left: 0.5rem;
+            transition: color 0.2s;
+        }
+
+        .remove-from-cart:hover {
+            color: #ff3b3b;
+        }
+
+        #cartTotal {
+            font-weight: 900;
+            margin-top: 1.5rem;
+            font-size: 1.2rem;
+            text-align: right;
+            padding-right: 1rem;
+        }
+
+        /* --- Forms (Signup, Checkout) --- */
+        form {
+            display: grid;
+            gap: 1rem;
+        }
+
+        input,
+        select {
+            padding: 0.75rem 1rem;
+            border: 1px solid #44474a;
+            border-radius: 0.5rem;
+            width: 100%;
+            background: #181a1b;
+            color: #f3f3f3;
+        }
+
+        input:focus,
+        select:focus {
+            outline: 2px solid #44474a;
+            border-color: transparent;
+            /* Hide default border on focus */
+        }
+
+        label {
+            font-weight: 600;
+            color: #e0e0e0;
+        }
+
+        .form-group {
+            display: grid;
+            gap: 0.5rem;
+        }
+
+        /* --- Footer --- */
+        footer {
+            background: #232526;
+            color: #b5b5b5;
+            padding: 2rem;
+            text-align: center;
+            margin-top: 4rem;
+        }
+
+        /* --- Modals --- */
+        .modal {
+            display: flex;
+            /* Changed from 'none' to 'flex' for easier toggling with 'hidden' class */
+            position: fixed;
+            z-index: 999;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.6);
+            justify-content: center;
+            align-items: center;
+            padding: 1rem;
+            /* Add padding for small screens */
+        }
+
+        .modal-content {
+            background: #232526;
+            padding: 2rem;
+            border-radius: 1rem;
+            width: 90%;
+            max-width: 400px;
+            color: #fff;
+            position: relative;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        .close {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            font-size: 1.5rem;
+            color: #fff;
+            cursor: pointer;
+            background: none;
+            /* Ensure no default button style */
+            border: none;
+        }
+
+        /* Disabled button style */
+        .add-to-cart:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        #updateProductModal.hidden {
+            display: none;
+        }
+
+        .animate-pulse {
+            animation-duration: 0.7s !important;
+            /* Default is 2s, lower is faster */
+        }
+    </style>
+</head>
+
+<body class="bg-black-900 text-white">
+    <header class="flex items-center justify-between px-6 py-3 bg-black-800">
+        <img alt="A-Days Clothing " class="h-10 w-auto" height="50"
+            src ="data:image/jpeg;base64,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kLotXIJngAAAfd7QFg36gLVuUjpleVWkauSs1UOhnjzm41aJa+1eSqsX2tb5z+3168GFEtUaQPWeadMOf32l3c55a6B1Iqtc3tmL3R7PH1YeVdQ5IdE1J6rkb6SlaN1CI3NMAAMtzRAzME/ZCiWe3jx9igAAAAAAAAAAAAAAAAAMIKwChQ3VkchdQiCjLJEmi+/ADLrXIt4sVcy1zx67yHfLDXPTwOgadN9S+QUFHGPWuSyJuwHpiWK58xzJS78w9j51Pke6a10oe+XHZoOReue+usdfp1d+11LmGv4QAPp8bkoV9dpg5vMdAFen8lAAAAAAAAAAAAAAAAAAAAAAAAAYR0oK1GXhHONHqo5F863pnMHRtYoS6+JUFs8isLH4kEmfIi0oItKiKSvqQqd2SsrZkVFcvcozoXuc2+9T2Dlu/wBFFLkbGqLkcwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAB/8QAAv/aAAwDAQACAAMAAAAh8888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888U88888888888888888888888888888w6yuiOSyyuvuuS26ywcg8888888888888888888888888yuGf/d91y9/++++y62x95TGCaw08888888888888888888waqH58/wA6/ri5/wD8/wDzHHrXrvqW/wD/AM97Dzzzzzzzzzzzzzzzy7N+L6wiLv2l9b4545KygxyTxK6wpzDzzIbTzzzzzzzzzzzz5/mvLzpTxrX327yj7zr7xpThry6rZbypL4pX3rzzzzzzzzzyb33Jrbw7zy7Pubbyq7zLzyZyhLxhYPzyw47bv1/7zzzzzzzzhb32fvTzrzx5xzxbz5bwryzzyyvzwZ+LbrzzP/30rzzzzzzzzzX336ZTizzzJJKJ7wpzjry7LyZLyjGLywbzrIt33fzzzzzzzzz7X33Pzi7yZX32NTwDjgLT67oq77J3957QKaa129bzzzzzzzzyybV2PJrIf/33208+/wDt99NNNNN99999TMWGN9Nac888888888886a9NterWy7mOCOiGKOOKCKCOmK2GDWwudlim888888888888888OmDV9deu0cA2k8QIskImskII2f9tj76u88888888888888888888O+WbL72G+yuTCq+SauSsa3zOD+s8888888888888888888888888M++S/SO2uX6Gq+r/+ucs888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888//EADQQAAEEAQMCBQQCAQQBBQAAAAMBAgQFAAYREhATFBUWICEwMUBQIkEjJDI0YCUzQlGAkP/aAAgBAQABBwL/APOndN9v+wTDuFfQk/7BdnCtnEck6Jsi+YQsGQZW8v3u6JjjhbjrGC3HXVY3HairUxdTV+eqIWLqmPnqtmeq89Vrnqtc9VLnqvPVeeq24mqo+JqiDiakrlxt7WLjbWvfiTIrsQg1+gcdq5zsfVXBFXLGsNXqxYenBlCx8ejgR/lrGsTb9u+XFHhLytHhNUREwmqTrj9RWTsfbWL8fLkkxVVfxeb0xkyUPG3FkzGajsW4zVMhMZqkOC1DXExlhCJiOa7pqEfOvV0Hfwkf9qWwhA3wmpYDMNqp2F1FYkwk6WbF+f0jDmHka9sI6bF1GU4lHG1HB4MYKzgmxFRf15DCEm8rUkQPwbUs1+GnTDqq/T2XGxZD03SBMVdvKLDfZunrFyb+nbDPTs7PTsxMWikJnkpkzycmeSkzyV+eTuzyd+eSGzySTnkM3PT9hi0dimOq57V2WLJbiiI3Nl+oGXKjruDU01mRtTRCfAZcaQm/6g0qPHTeTqeMP4kagsTboQpCfRaxxPgFRPPjdMS1bu3ToB46vowb53qAWedV4m7eplT4fqSWuPvrF2LdWKpstlOXPGylxZB1zk9c3XN1zk7OS5v05Ozm/EkyG42xmsxtxYtdyZf2CLuzUh0xb8BExtvVrjpVGdMSNSH2w1JGX5Jp+YiIr4Msaqitc36LXvYqKC+sY+2RdTgf8AmR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" />
+        <nav class="flex items-center space-x-6 text-sm font-semibold text-white">
+            <a class="hover:underline" href="#categories">Categories</a>
+            <a class="hover:underline" href="#products">Products</a>
+            <a id="cartToggle"
+                class="bg-black-700 rounded-full px-4 py-2 cursor-pointer hover:bg-gray-700 transition">Cart (0)</a>
+            <a class="bg-black-700 rounded-full px-4 py-2 hover:bg-gray-700 transition" href="#">Home</a>
+            <button id="authButton"
+                class="bg-black-700 rounded-full px-4 py-2 text-sm font-semibold hover:bg-gray-600 transition">Log
+                In</button>
+            <button id="updateProductsBtn"
+                class="bg-blue-700 rounded-full px-4 py-2 text-sm font-semibold hover:bg-blue-600 transition hidden">Update
+                Products</button>
+        </nav>
+        <div id="updateProductsModal" class="modal hidden">
+            <div class="modal-content" style="max-width:900px;width:95%">
+                <button class="close" onclick="closeUpdateProductsModal()">&times;</button>
+                <h2 class="text-xl font-bold mb-4">Update Products</h2>
+                <div id="updateProductsTableContainer"></div>
+            </div>
+        </div>
+    </header>
+    
+
+    <main class="flex flex-col items-center justify-center text-center py-24 px-6 hero">
+        <div class="hero-content">
+            <h1 class="text-3xl sm:text-4xl md:text-5xl font-extrabold mb-3 leading-tight">Find Your Style Today</h1>
+            <p class="text-xs sm:text-sm md:text-base max-w-md mb-6">Discover the latest trends in Kids, Men's & Women's
+                Clothing – All in One place.</p>
+            <a href="#categories">
+                <button
+                    class="bg-gray-700 rounded-full px-5 py-2 text-xs sm:text-sm font-semibold hover:bg-gray-600 transition">Shop
+                    Now</button>
+            </a>
+        </div>
+    </main>
+
+    <div id="authModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 hidden z-50">
+        <div class="w-full max-w-md bg-gray-800 rounded-lg shadow-lg p-8 relative">
+            <button id="closeModalBtn" class="absolute top-3 right-3 text-gray-400 hover:text-white focus:outline-none"
+                aria-label="Close modal">
+                <i class="fas fa-times text-xl"></i>
+            </button>
+            <h2 class="text-2xl font-semibold text-white mb-6 text-center" id="formTitle">Log In</h2>
+
+            <form id="signupForm" class="space-y-6">
+                <div>
+                    <label for="signupEmail" class="block text-sm font-medium text-gray-300 mb-1">Email address</label>
+                    <input id="signupEmail" type="email" required placeholder="you@example.com"
+                        class="w-full border border-gray-600 rounded px-3 py-2 text-sm bg-gray-900 text-white focus:outline-none focus:ring-2 focus:ring-gray-500" />
+                </div>
+                <div>
+                    <label for="signupPassword" class="block text-sm font-medium text-gray-300 mb-1">Password</label>
+                    <input id="signupPassword" type="password" required placeholder="Enter your password"
+                        class="w-full border border-gray-600 rounded px-3 py-2 text-sm bg-gray-900 text-white focus:outline-none focus:ring-2 focus:ring-gray-500" />
+                </div>
+                <button id="signupBtn" type="submit"
+                    class="w-full bg-gray-700 hover:bg-gray-600 text-white font-semibold py-2 rounded transition">
+                    Sign Up
+                </button>
+            </form>
+
+            <form id="loginForm" class="space-y-6 hidden">
+                <div>
+                    <label for="loginEmail" class="block text-sm font-medium text-gray-300 mb-1">Email address</label>
+                    <input id="loginEmail" type="email" required placeholder="you@example.com"
+                        class="w-full border border-gray-600 rounded px-3 py-2 text-sm bg-gray-900 text-white focus:outline-none focus:ring-2 focus:ring-gray-500" />
+                </div>
+                <div>
+                    <label for="loginPassword" class="block text-sm font-medium text-gray-300 mb-1">Password</label>
+                    <input id="loginPassword" type="password" required placeholder="Enter your password"
+                        class="w-full border border-gray-600 rounded px-3 py-2 text-sm bg-gray-900 text-white focus:outline-none focus:ring-2 focus:ring-gray-500" />
+                </div>
+                <button id="loginBtn" type="submit"
+                    class="w-full bg-gray-700 hover:bg-gray-600 text-white font-semibold py-2 rounded transition">
+                    Log In
+                </button>
+            </form>
+
+            <p class="mt-6 text-center text-sm text-gray-400">
+                <span id="toggleText">Already have an account?</span>
+                <button id="toggleBtn" class="text-blue-300 font-semibold hover:underline focus:outline-none">Log
+                    In</button>
+            </p>
+        </div>
+    </div>
+
+    <section id="categories" class="categories container">
+        <h2 class="text-2xl font-bold mb-6">Shop by Category</h2>
+        <div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(250px,1fr))">
+            <div class="category-card"
+                style="background:url('https://images.unsplash.com/photo-1503341455253-b2e723bb3dbb?auto=format&fit=crop&w=900&q=80') center/cover"
+                onclick="filterCategory('kids')"><span>Kids</span></div>
+            <div class="category-card"
+                style="background:url('https://th.bing.com/th/id/OIP.qDpKEsMMPQy0-FVpVSAgSAHaIB?w=168&h=182&c=7&r=0&o=5&pid=1.7') center/cover"
+                onclick="filterCategory('men')"><span>Men</span></div>
+            <div class="category-card"
+                style="background:url('https://images.unsplash.com/photo-1529626455594-4ff0802cfb7e?auto=format&fit=crop&w=900&q=80') center/cover"
+                onclick="filterCategory('women')"><span>Women</span></div>
+        </div>
+    </section>
+
+    <section id="products" class="products container">
+        <h2 class="text-2xl font-bold mb-6">Products</h2>
+        <div id="productGrid" class="grid" style="grid-template-columns:repeat(auto-fit,minmax(220px,1fr))">
+            <!-- Shimmer loader -->
+            <div class="product-card animate-pulse" style="min-height:320px;">
+                <div class="bg-gray-700 h-40 w-full mb-4 rounded"></div>
+                <div class="product-info">
+                    <div class="h-5 bg-gray-700 rounded w-3/4 mb-2"></div>
+                    <div class="h-4 bg-gray-700 rounded w-1/2 mb-4"></div>
+                    <div class="h-8 bg-gray-700 rounded w-full"></div>
+                </div>
+            </div>
+            <div class="product-card animate-pulse" style="min-height:320px;">
+                <div class="bg-gray-700 h-40 w-full mb-4 rounded"></div>
+                <div class="product-info">
+                    <div class="h-5 bg-gray-700 rounded w-3/4 mb-2"></div>
+                    <div class="h-4 bg-gray-700 rounded w-1/2 mb-4"></div>
+                    <div class="h-8 bg-gray-700 rounded w-full"></div>
+                </div>
+            </div>
+            <div class="product-card animate-pulse" style="min-height:320px;">
+                <div class="bg-gray-700 h-40 w-full mb-4 rounded"></div>
+                <div class="product-info">
+                    <div class="h-5 bg-gray-700 rounded w-3/4 mb-2"></div>
+                    <div class="h-4 bg-gray-700 rounded w-1/2 mb-4"></div>
+                    <div class="h-8 bg-gray-700 rounded w-full"></div>
+                </div>
+            </div>
+            <div class="product-card animate-pulse" style="min-height:320px;">
+                <div class="bg-gray-700 h-40 w-full mb-4 rounded"></div>
+                <div class="product-info">
+                    <div class="h-5 bg-gray-700 rounded w-3/4 mb-2"></div>
+                    <div class="h-4 bg-gray-700 rounded w-1/2 mb-4"></div>
+                    <div class="h-8 bg-gray-700 rounded w-full"></div>
+                </div>
+            </div>
+            <div class="product-card animate-pulse" style="min-height:320px;">
+                <div class="bg-gray-700 h-40 w-full mb-4 rounded"></div>
+                <div class="product-info">
+                    <div class="h-5 bg-gray-700 rounded w-3/4 mb-2"></div>
+                    <div class="h-4 bg-gray-700 rounded w-1/2 mb-4"></div>
+                    <div class="h-8 bg-gray-700 rounded w-full"></div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <aside id="cartSidebar">
+        <div class="cart-header">
+            <h3>Your Cart</h3>
+            <button onclick="toggleCart()">&times;</button>
+        </div>
+        <div id="cartItems"></div>
+        <p id="cartTotal" class="mt-4 text-right font-bold"></p>
+        <div class="flex flex-col gap-4 mt-6">
+            <button class="btn btn-primary w-full" onclick="goToCheckout()">Checkout</button>
+            <button class="btn btn-primary w-full" onclick="clearCartAndClose()">Clear Cart & Close</button>
+        </div>
+    </aside>
+
+    <section id="checkout" class="container hidden" style="padding:4rem 0">
+        <h2 class="text-2xl font-bold mb-6">Shipping & Payment</h2>
+        <form style="max-width:600px;margin-top:1.5rem">
+            <div class="form-group"><label for="address">Address</label><input type="text" id="address" required></div>
+            <div class="form-group"><label for="city">City</label><input type="text" id="city" required></div>
+            <div class="form-group"><label for="postalCode">Postal Code</label><input type="text" id="postalCode"
+                    required></div>
+            <div class="form-group"><label for="paymentMethod">Payment Method</label>
+                <select id="paymentMethod" required>
+                    <option>Credit / Debit Card</option>
+                    <option>PayPal</option>
+                    <option>Cash on Delivery</option>
+                </select>
+            </div>
+            <button type="submit" class="btn btn-primary w-full">Place Order</button>
+        </form>
+    </section>
+
+    <footer>
+        <p>&copy; 2025 A-Days Clothing. All rights reserved.</p>
+    </footer>
+
+    <!-- Add this modal just before </body> -->
+    <div id="updateProductModal" class="modal hidden">
+        <div class="modal-content">
+            <button class="close" onclick="closeUpdateProductModal()">&times;</button>
+            <h2 class="text-xl font-bold mb-4">Update Product</h2>
+            <form id="updateProductForm">
+                <div class="form-group">
+                    <label for="updateProductName">Name</label>
+                    <input type="text" id="updateProductName" required>
+                </div>
+                <div class="form-group">
+                    <label for="updateProductPrice">Price</label>
+                    <input type="number" id="updateProductPrice" required min="1">
+                </div>
+                <button type="submit" class="btn btn-primary w-full mt-2">Save Changes</button>
+            </form>
+        </div>
+    </div>
+    <div id="addProductModal" class="modal hidden">
+        <div class="modal-content">
+            <button class="close" onclick="closeAddProductModal()">&times;</button>
+            <h2 class="text-xl font-bold mb-4">Add Product</h2>
+            <form id="addProductForm">
+                <div class="form-group">
+                    <label for="addProductId">ID</label>
+                    <input type="number" id="addProductId" required min="1">
+                </div>
+                <div class="form-group">
+                    <label for="addProductName">Name</label>
+                    <input type="text" id="addProductName" required>
+                </div>
+                <div class="form-group">
+                    <label for="addProductPrice">Price</label>
+                    <input type="number" id="addProductPrice" required min="1">
+                </div>
+                <div class="form-group">
+                    <label for="addProductCategory">Category</label>
+                    <select id="addProductCategory" required>
+                        <option value="">Select category</option>
+                        <option value="kids">Kids</option>
+                        <option value="men">Men</option>
+                        <option value="women">Women</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="addProductImg">Image URL</label>
+                    <input type="text" id="addProductImg" required>
+                </div>
+                <button type="submit" class="btn btn-primary w-full mt-2">Add Product</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // Firebase Configuration (REPLACE WITH YOUR ACTUAL CONFIG)
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyBbl0o1w8tSBrNaWfrCtZA8nWj9dsqA-xM",
+            authDomain: "a--dayss.firebaseapp.com",
+            projectId: "a--dayss",
+            storageBucket: "a--dayss.firebasestorage.app",
+            messagingSenderId: "86439406335",
+            appId: "1:86439406335:web:a2026e49248c13caf5baca",
+        };
+
+        // Initialize Firebase App
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+
+        // Sample products data (can be fetched from Firestore if preferred)
+        const products = [
+            { id: 1, cat: "kids", name: "Cotton Short Kids", price: 250, img: "https://dynamic.zacdn.com/MVSXulp9W5bWqwBUSrjRwT0ScSY=/filters:quality(70):format(webp)/https://static-ph.zacdn.com/p/cotton-on-kids-4758-5429953-1.jpg" },
+            { id: 2, cat: "kids", name: "Happy Fiesta Shirt Kids", price: 300, img: "https://dynamic.zacdn.com/VUEueNhhOzat5GQveUzrYTmZFzY=/0x770/filters:quality(70):format(webp)/https://static-ph.zacdn.com/p/cotton-on-kids-2288-8188073-2.jpg" },
+            { id: 3, cat: "kids", name: "Jersey Kids", price: 450, img: "https://dynamic.zacdn.com/WrY2U6obw5QYDludCC_pkVgXSdI=/filters:quality(70):format(webp)/https://static-ph.zacdn.com/p/cotton-on-kids-2991-6693943-4.jpg" },
+            { id: 4, cat: "men", name: "SweatShirt", price: 300, img: "https://dynamic.zacdn.com/sWoE1ZyitQNwxpF3rqyYoxMycB4=/0x770/filters:quality(70):format(webp)/https://static-ph.zacdn.com/p/nike-8658-2295433-2.jpg" },
+            { id: 5, cat: "men", name: "Denim Jacket", price: 250, img: "https://dynamic.zacdn.com/kIYAj5FMaTZKICKtbUINNdS2NMI=/0x770/filters:quality(70):format(webp)/https://static-ph.zacdn.com/p/ego-4050-6463283-2.jpg" },
+            { id: 6, cat: "men", name: "Hoodie", price: 450, img: "https://is4.revolveassets.com/images/p4/n/z/OAYF-MK29_V4.jpg" },
+            { id: 7, cat: "women", name: "Summer Dress", price: 700, img: "https://is4.revolveassets.com/images/p4/n/uv/ETOR-WS6_V1.jpg" },
+            { id: 8, cat: "women", name: "belted pleated Skirt", price: 300, img: "https://dynamic.zacdn.com/qslLzAtXg_4jCsUie3leakDWI-M=/0x770/filters:quality(70):format(webp)/https://static-ph.zacdn.com/p/hm-9152-9899863-2.jpg" },
+            { id: 9, cat: "women", name: "Hoody Puffy Coat", price: 250, img: "https://dynamic.zacdn.com/sC34jK23kc3vSGppGwzwqGGQCow=/0x770/filters:quality(70):format(webp)/https://static-ph.zacdn.com/p/happiness-istanbul-0298-7105603-2.jpg" }
+        ];
+
+        // Upload all products to Firestore (run this ONCE from the browser console or call in init)
+        async function uploadProductsToFirestore() {
+            for (const product of products) {
+                await db.collection('products').doc(String(product.id)).set(product, { merge: true });
+            }
+            alert('Products uploaded to Firestore!');
+        }
+        // To upload, open browser console and run: uploadProductsToFirestore();
+
+        // DOM elements
+        const productGrid = document.getElementById("productGrid");
+        const cartCount = document.getElementById("cartToggle");
+        const cartSidebar = document.getElementById("cartSidebar");
+        const cartItems = document.getElementById("cartItems");
+        const cartTotal = document.getElementById("cartTotal");
+        const authButton = document.getElementById('authButton');
+        const authModal = document.getElementById('authModal');
+        const closeModalBtn = document.getElementById('closeModalBtn');
+        const signupForm = document.getElementById('signupForm');
+        const loginForm = document.getElementById('loginForm');
+        const toggleBtn = document.getElementById('toggleBtn');
+        const toggleText = document.getElementById('toggleText');
+        const formTitle = document.getElementById('formTitle');
+        const checkoutSection = document.getElementById('checkout');
+
+
+        // Cart state
+        let cart = [];
+        let currentUser = null;
+        let liveProducts = [];
+        let updatingProductId = null;
+
+        // --- App Initialization ---
+        function init() {
+            listenToProductsFromFirestore();
+            setupAuth();
+
+            // Cart toggle event
+            document.getElementById("cartToggle").addEventListener("click", (e) => {
+                e.preventDefault();
+                toggleCart();
+            });
+
+            // Handle checkout form submission (basic for now)
+            checkoutSection.querySelector('form').addEventListener('submit', async (e) => {
+                e.preventDefault();
+
+                if (!currentUser) {
+                    alert("Please log in to place an order.");
+                    showSignUp();
+                    authModal.classList.remove('hidden');
+                    return;
+                }
+                if (cart.length === 0) {
+                    alert("Your cart is empty.");
+                    return;
+                }
+
+                // Get checkout form values
+                const address = document.getElementById('address').value;
+                const city = document.getElementById('city').value;
+                const postalCode = document.getElementById('postalCode').value;
+                const paymentMethod = document.getElementById('paymentMethod').value;
+
+                // Prepare order data with product name, price, qty
+                const orderItems = cart.map(cartItem => {
+                    const product = liveProducts.find(p => p.id === cartItem.id);
+                    return product
+                        ? {
+                            id: product.id,
+                            name: product.name,
+                            price: product.price,
+                            qty: cartItem.qty
+                        }
+                        : null;
+                }).filter(Boolean);
+
+                const orderData = {
+                    userId: currentUser.uid,
+                    email: currentUser.email,
+                    items: orderItems,
+                    address,
+                    city,
+                    postalCode,
+                    paymentMethod,
+                    total: orderItems.reduce((s, i) => s + i.price * i.qty, 0),
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                };
+
+                try {
+                    // Save order to Firestore (orders collection)
+                    await db.collection('orders').add(orderData);
+
+                    alert('Order Placed Successfully!');
+
+                    // Optionally, clear cart and UI
+                    cart = [];
+                    updateCartUI();
+                    await saveCartToFirestore();
+                    checkoutSection.classList.add('hidden');
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                } catch (error) {
+                    alert('Error placing order: ' + error.message);
+                    console.error("Order error:", error);
+                }
+            });
+        }
+
+        // --- Product Rendering ---
+        function renderProducts(list) {
+            productGrid.innerHTML = list
+                .map(
+                    (p) => `
+                        <div class="product-card">
+                            <img src="${p.img}" alt="${p.name}">
+                            <div class="product-info">
+                                <h3 id="name-${p.id}">${p.name}</h3>
+                                <p class="product-price" id="price-${p.id}">${p.price.toLocaleString('en-PH', { style: 'currency', currency: 'PHP' }).replace('PHP', '₱').trim()}</p>
+                                <button class="btn btn-primary add-to-cart" onclick="addToCart(${p.id})">Add to Cart</button>
+                            </div>
+                        </div>
+                    `
+                )
+                .join("");
+            renderUpdateButtons(list); // Add this line to show update buttons below the grid
+            enableAddToCartButtons(!!currentUser);
+        }
+
+
+        // --- new code modal update product ---
+
+        // Show modal and render update table when button is clicked
+        // Static admin login
+        let isAdmin = false;
+        document.getElementById('updateProductsBtn').onclick = function () {
+            if (!isAdmin) {
+                const user = prompt("Enter admin username:");
+                const pass = prompt("Enter admin password:");
+                if (user === "admin" && pass === "admin1234") {
+                    isAdmin = true;
+                } else {
+                    alert("Invalid admin credentials.");
+                    return;
+                }
+            }
+            document.getElementById('updateProductsModal').classList.remove('hidden');
+        };
+        function closeUpdateProductsModal() {
+            document.getElementById('updateProductsModal').classList.add('hidden');
+        }
+        // Render update table inside modal
+        function renderUpdateButtons(list) {
+            document.getElementById('updateProductsTableContainer').innerHTML = `
+        <div class="mb-4 flex justify-end">
+            <button class="btn btn-primary bg-green-600 hover:bg-green-700" onclick="showAddProductModal()">Add Product</button>
+        </div>
+        <div class="overflow-x-auto" style="max-height:400px;overflow-y:auto;">
+            <table class="min-w-full text-sm text-left border border-gray-700 rounded-lg bg-gray-900">
+                <thead>
+                    <tr>
+                        <th class="px-4 py-2 border-b border-gray-700">ID</th>
+                        <th class="px-4 py-2 border-b border-gray-700">Name</th>
+                        <th class="px-4 py-2 border-b border-gray-700">Price</th>
+                        <th class="px-4 py-2 border-b border-gray-700">Category</th>
+                        <th class="px-4 py-2 border-b border-gray-700">Edit</th>
+                        <th class="px-4 py-2 border-b border-gray-700">Delete</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${list.map(p => `
+                        <tr>
+                            <td class="px-4 py-2 border-b border-gray-800">${p.id}</td>
+                            <td class="px-4 py-2 border-b border-gray-800">${p.name}</td>
+                            <td class="px-4 py-2 border-b border-gray-800">₱${p.price}</td>
+                            <td class="px-4 py-2 border-b border-gray-800 capitalize">${p.cat}</td>
+                            <td class="px-4 py-2 border-b border-gray-800">
+                                <button class="btn btn-primary" onclick="showUpdateProductModal(${p.id})">Edit</button>
+                            </td>
+                            <td class="px-4 py-2 border-b border-gray-800">
+                                <button class="btn btn-primary bg-red-600 hover:bg-red-700" onclick="deleteProduct(${p.id})">Delete</button>
+                            </td>
+                        </tr>
+                    `).join('')}
+                </tbody>
+            </table>
+        </div>
+    `;
+        }
+
+        // Add this function below renderProducts
+        function showUpdateProductModal(productId) {
+            updatingProductId = productId;
+            const name = document.getElementById(`name-${productId}`).textContent;
+            const priceText = document.getElementById(`price-${productId}`).textContent.replace(/[^\d.]/g, '');
+            document.getElementById('updateProductName').value = name;
+            document.getElementById('updateProductPrice').value = priceText;
+            document.getElementById('updateProductModal').classList.remove('hidden');
+        }
+
+        function closeUpdateProductModal() {
+            document.getElementById('updateProductModal').classList.add('hidden');
+            updatingProductId = null;
+        }
+
+        document.getElementById('updateProductForm').addEventListener('submit', async function (e) {
+            e.preventDefault();
+            const newName = document.getElementById('updateProductName').value.trim();
+            const newPrice = parseFloat(document.getElementById('updateProductPrice').value);
+            if (!updatingProductId || !newName || isNaN(newPrice)) return;
+
+            try {
+                await db.collection('products').doc(String(updatingProductId)).update({
+                    name: newName,
+                    price: newPrice
+                });
+                closeUpdateProductModal();
+                alert('Product updated!');
+                // Firestore listener will auto-update the UI and cart
+            } catch (error) {
+                alert('Error updating product: ' + error.message);
+            }
+        });
+
+        async function deleteProduct(productId) {
+            if (!confirm("Are you sure you want to delete this product? This cannot be undone.")) return;
+            try {
+                await db.collection('products').doc(String(productId)).delete();
+                alert('Product deleted!');
+                // Firestore listener will auto-update the UI and cart
+            } catch (error) {
+                alert('Error deleting product: ' + error.message);
+            }
+        }
+        window.deleteProduct = deleteProduct; // <-- Add this line
+
+        function filterCategory(cat) {
+            renderProducts(products.filter((p) => p.cat === cat));
+            document.getElementById('products').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        // --- Cart Functions ---
+        async function addToCart(id) {
+            if (!currentUser) {
+                alert("Please sign in to add items to cart.");
+                showSignUp();
+                authModal.classList.remove('hidden');
+                return;
+            }
+
+            // Find if item already in cart
+            const cartItem = cart.find(item => item.id === id);
+            if (cartItem) {
+                cartItem.qty += 1;
+            } else {
+                cart.push({ id: id, qty: 1 });
+            }
+            updateCartUI();
+            await saveCartToFirestore();
+            alert("You have selected an item!");
+        }
+
+        function removeFromCart(index) {
+            if (cart[index].qty > 1) {
+                cart[index].qty -= 1;
+            } else {
+                cart.splice(index, 1);
+            }
+            updateCartUI();
+            if (currentUser) {
+                saveCartToFirestore();
+            }
+        }
+
+        function updateCartUI() {
+            cartCount.textContent = `Cart (${cart.reduce((sum, item) => sum + item.qty, 0)})`;
+            if (cart.length === 0) {
+                cartItems.innerHTML = '<p class="text-center text-gray-400 mt-4">Your cart is empty.</p>';
+            } else {
+                cartItems.innerHTML = cart
+                    .map((cartItem, index) => {
+                        const product = liveProducts.find(p => p.id === cartItem.id);
+                        if (!product) return `<p><span>Product not found</span></p>`;
+                        return `
+                            <p>
+                                <span>${product.name} x${cartItem.qty} – ${(product.price * cartItem.qty).toLocaleString('en-PH', { style: 'currency', currency: 'PHP' }).replace('PHP', '₱').trim()}</span>
+                                <button class="remove-from-cart" onclick="removeFromCart(${index})">&times;</button>
+                            </p>
+                        `;
+                    })
+                    .join("");
+            }
+            // Calculate total using live product prices and quantities
+            const total = cart.reduce((sum, cartItem) => {
+                const product = liveProducts.find(p => p.id === cartItem.id);
+                return sum + (product ? product.price * cartItem.qty : 0);
+            }, 0);
+            cartTotal.textContent = `Total: ${total.toLocaleString('en-PH', { style: 'currency', currency: 'PHP' }).replace('PHP', '₱').trim()}`;
+        }
+
+        function toggleCart() {
+            cartSidebar.classList.toggle("open");
+            // Hide checkout section if cart is opened
+            if (cartSidebar.classList.contains('open')) {
+                checkoutSection.classList.add('hidden');
+            }
+        }
+
+        function goToCheckout() {
+            if (cart.length === 0) {
+                alert("Your cart is empty. Please add items before checking out.");
+                return;
+            }
+            checkoutSection.classList.remove('hidden'); // Show checkout section
+            document.getElementById('checkout').scrollIntoView({ behavior: 'smooth' });
+            toggleCart(); // Close the cart sidebar
+        }
+
+        function clearCartAndClose() {
+            cart = [];
+            updateCartUI();
+            toggleCart();
+            if (currentUser) {
+                saveCartToFirestore(); // Save empty cart to Firestore
+            }
+        }
+
+        // --- Firestore Cart Functions ---
+        async function saveCartToFirestore() {
+            if (!currentUser) return;
+
+            try {
+                await db.collection('carts').doc(currentUser.uid).set({
+                    items: cart,
+                    lastUpdated: firebase.firestore.FieldValue.serverTimestamp(),
+
+                });
+                console.log("Cart saved to Firestore successfully!");
+            } catch (error) {
+                console.error("Error saving cart to Firestore:", error);
+
+            }
+
+        }
+
+        async function loadCartFromFirestore() {
+            if (!currentUser) return;
+
+            try {
+                const doc = await db.collection('carts').doc(currentUser.uid).get();
+                if (doc.exists) {
+                    cart = doc.data().items || [];
+                    updateCartUI();
+                    console.log("Cart loaded from Firestore successfully!");
+                } else {
+                    console.log("No cart found for this user in Firestore. Starting with an empty cart.");
+                    cart = [];
+                    updateCartUI();
+                }
+            } catch (error) {
+                console.error("Error loading cart from Firestore:", error);
+
+            }
+        }
+
+        function listenToCartFromFirestore() {
+            if (!currentUser) return;
+            db.collection('carts').doc(currentUser.uid)
+                .onSnapshot(doc => {
+                    if (doc.exists) {
+                        cart = doc.data().items || [];
+                        updateCartUI();
+                        console.log("Cart updated from Firestore in real-time!");
+                    } else {
+                        cart = [];
+                        updateCartUI();
+                    }
+                });
+        }
+
+        // Listen to admin status from Firestore by email address
+        function listenToAdminStatus(email) {
+            if (!email) return;
+            db.collection('admins').doc(email)
+                .onSnapshot(doc => {
+                    if (doc.exists) {
+                        isAdmin = true;
+                        document.getElementById('updateProductsBtn').classList.remove('hidden');
+                        console.log("Admin privileges granted.");
+                    } else {
+                        isAdmin = false;
+                        document.getElementById('updateProductsBtn').classList.add('hidden');
+                        console.log("Standard user privileges.");
+                    }
+                });
+        }
+
+        // --- Authentication Functions ---
+        function setupAuth() {
+            // Auth state listener
+            auth.onAuthStateChanged(user => {
+                currentUser = user;
+                if (user) {
+                    // User is signed in
+                    updateAuthButton(true);
+                    loadCartFromFirestore(); // Load cart when user logs in
+                    listenToCartFromFirestore();
+                    enableAddToCartButtons(true);
+                    listenToAdminStatus(user.email); // Check admin status
+                    console.log("User logged in:", user.email);
+                } else {
+                    // User is signed out
+                    updateAuthButton(false);
+                    cart = []; // Clear cart on logout
+                    updateCartUI();
+                    enableAddToCartButtons(false);
+                    console.log("User logged out.");
+                }
+            });
+
+            // Auth modal toggle
+            authButton.addEventListener('click', () => {
+                if (currentUser) {
+                    // Log out
+                    if (confirm("Are you sure you want to log out?")) {
+                        auth.signOut();
+                    }
+                } else {
+                    // Show auth modal
+                    showSignUp(); // Default to signup form
+                    authModal.classList.remove('hidden');
+                }
+            });
+
+            // Close modal
+            closeModalBtn.addEventListener('click', () => {
+                authModal.classList.add('hidden');
+                clearForms();
+            });
+
+            // Toggle between forms
+            toggleBtn.addEventListener('click', () => {
+                if (signupForm.classList.contains('hidden')) {
+                    showSignUp();
+                } else {
+                    showLogIn();
+                }
+            });
+
+            // Sign up form submission
+            signupForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const email = document.getElementById('signupEmail').value;
+                const password = document.getElementById('signupPassword').value;
+
+                try {
+                    await auth.createUserWithEmailAndPassword(email, password);
+                    alert('Sign up successful! You are now logged in.');
+                    authModal.classList.add('hidden');
+                    clearForms();
+                } catch (error) {
+                    alert('Error signing up: ' + error.message);
+                    console.error("Signup error:", error);
+                }
+            });
+
+            // Login form submission
+            loginForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const email = document.getElementById('loginEmail').value;
+                const password = document.getElementById('loginPassword').value;
+
+                try {
+                    await auth.signInWithEmailAndPassword(email, password);
+                    alert('Log in successful!');
+                    authModal.classList.add('hidden');
+                    clearForms();
+                } catch (error) {
+                    alert('Error logging in: ' + error.message);
+                    console.error("Login error:", error);
+                }
+            });
+        }
+
+        function updateAuthButton(isLoggedIn) {
+            if (isLoggedIn) {
+                authButton.textContent = 'Log Out';
+            } else {
+                authButton.textContent = 'Log In';
+            }
+        }
+
+        function showSignUp() {
+            signupForm.classList.remove('hidden');
+            loginForm.classList.add('hidden');
+            formTitle.textContent = 'Sign Up';
+            toggleText.textContent = 'Already have an account?';
+            toggleBtn.textContent = 'Log In';
+        }
+
+        function showLogIn() {
+            signupForm.classList.add('hidden');
+            loginForm.classList.remove('hidden');
+            formTitle.textContent = 'Log In';
+            toggleText.textContent = "Don't have an account?";
+            toggleBtn.textContent = 'Sign Up';
+        }
+
+        function clearForms() {
+            signupForm.reset();
+            loginForm.reset();
+        }
+
+        function enableAddToCartButtons(enable) {
+            document.querySelectorAll('.add-to-cart').forEach(button => {
+                button.disabled = !enable;
+                button.title = enable ? "" : "Sign in to add to cart";
+                if (enable) {
+                    button.classList.remove('opacity-50', 'cursor-not-allowed');
+                } else {
+                    button.classList.add('opacity-50', 'cursor-not-allowed');
+                }
+            });
+        }
+
+        // 1. Upload all products to Firestore (CREATE/UPDATE)
+        async function uploadProductsToFirestore() {
+            for (const product of products) {
+                // Use product.id as the document ID for easy updates
+                await db.collection('products').doc(String(product.id)).set(product, { merge: true });
+            }
+            alert('Products uploaded to Firestore!');
+        }
+
+        // 2. Load products from Firestore and listen for changes (REAL-TIME SYNC)
+        function listenToProductsFromFirestore() {
+            db.collection('products').onSnapshot(snapshot => {
+                liveProducts = [];
+                snapshot.forEach(doc => liveProducts.push(doc.data()));
+                renderProducts(liveProducts);
+                updateCartUI(); // Update cart with new product info
+            });
+        }
+
+        // --- Usage ---
+        // Remove or comment out this line after first upload to avoid duplicate writes:
+        // uploadProductsToFirestore();
+
+        // In your init function, replace renderProducts(products); with:
+        listenToProductsFromFirestore();
+
+        // Initialize the app when the DOM is fully loaded
+        window.addEventListener('DOMContentLoaded', init);
+
+        function showAddProductModal() {
+            document.getElementById('addProductModal').classList.remove('hidden');
+        }
+        function closeAddProductModal() {
+            document.getElementById('addProductModal').classList.add('hidden');
+            document.getElementById('addProductForm').reset();
+        }
+        document.getElementById('addProductForm').addEventListener('submit', async function (e) {
+            e.preventDefault();
+            const id = parseInt(document.getElementById('addProductId').value);
+            const name = document.getElementById('addProductName').value.trim();
+            const price = parseFloat(document.getElementById('addProductPrice').value);
+            const cat = document.getElementById('addProductCategory').value;
+            const img = document.getElementById('addProductImg').value.trim();
+            if (!id || !name || isNaN(price) || !cat || !img) return;
+            try {
+                await db.collection('products').doc(String(id)).set({
+                    id, name, price, cat, img
+                }, { merge: true });
+                closeAddProductModal();
+                alert('Product added!');
+                // Firestore listener will auto-update the UI
+            } catch (error) {
+                alert('Error adding product: ' + error.message);
+            }
+        });
+    </script>
+</body>
+
+</html>
